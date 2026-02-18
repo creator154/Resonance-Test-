@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resonance Quiz - NEET/JEE Practice</title>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; padding: 20px; }
+    h1 { text-align: center; color: #333; }
+    .test-list { max-width: 800px; margin: auto; }
+    .test-card { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Resonance Quiz - Yakeen NEET Hindi 2026 Tests</h1>
+  <div class="test-list" id="tests"></div>
+
+  <script>
+    fetch('/api/tests')
+      .then(res => res.json())
+      .then(tests => {
+        const container = document.getElementById('tests');
+        tests.forEach(test => {
+          const card = document.createElement('div');
+          card.className = 'test-card';
+          card.innerHTML = `
+            <h3>${test.name}</h3>
+            <p>Date: ${test.date} | Questions: ${test.questions}</p>
+            <button onclick="startTest('${test.id}')">Start Test</button>
+          `;
+          container.appendChild(card);
+        });
+      });
+
+    function startTest(testId) {
+      window.location.href = `/test.html?test=${testId}`;
+    }
+  </script>
+</body>
+</html>
