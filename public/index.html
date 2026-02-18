@@ -1,41 +1,63 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resonance Quiz - NEET/JEE Practice</title>
-  <style>
-    body { font-family: Arial; background: #f4f4f4; padding: 20px; }
-    h1 { text-align: center; color: #333; }
-    .test-list { max-width: 800px; margin: auto; }
-    .test-card { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    button { background: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
-  </style>
-</head>
-<body>
-  <h1>Resonance Quiz - Yakeen NEET Hindi 2026 Tests</h1>
-  <div class="test-list" id="tests"></div>
+<div style="text-align:center; margin:20px;">
+  <h2>Login to Access Tests</h2>
+  <input id="username" placeholder="Username (dev)" style="padding:10px; margin:5px;">
+  <input id="password" type="password" placeholder="Password (password123)" style="padding:10px; margin:5px;">
+  <button onclick="login()" style="padding:10px 20px; background:#007bff; color:white; border:none; cursor:pointer;">Login</button>
+  <p id="message" style="color:red;"></p>
+</div>
 
-  <script>
-    fetch('/api/tests')
-      .then(res => res.json())
-      .then(tests => {
-        const container = document.getElementById('tests');
-        tests.forEach(test => {
-          const card = document.createElement('div');
-          card.className = 'test-card';
-          card.innerHTML = `
-            <h3>${test.name}</h3>
-            <p>Date: ${test.date} | Questions: ${test.questions}</p>
-            <button onclick="startTest('${test.id}')">Start Test</button>
-          `;
-          container.appendChild(card);
-        });
+<script>
+  function login() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        document.getElementById('message').style.color = 'green';
+        document.getElementById('message').innerText = 'Login success! Tests loading...';
+        loadTests();  // tests reload kar
+      } else {
+        document.getElementById('message').innerText = data.error;
+      }
+    })
+    .catch(err => console.log(err));
+  }
+
+  // Tests load karne ka function (token ke saath)
+  function loadTests() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    fetch('/api/tests', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(tests => {
+      const container = document.getElementById('tests');
+      container.innerHTML = '';  // clear pehle
+      tests.forEach(test => {
+        const card = document.createElement('div');
+        card.className = 'test-card';
+        card.innerHTML = `
+          <h3>${test.name}</h3>
+          <p>Date: ${test.date} | Questions: ${test.questions}</p>
+          <button onclick="startTest('${test.id}')">Start Test</button>
+        `;
+        container.appendChild(card);
       });
+    })
+    .catch(err => console.log('Tests load error:', err));
+  }
 
-    function startTest(testId) {
-      window.location.href = `/test.html?test=${testId}`;
-    }
-  </script>
-</body>
-</html>
+  // Page load pe agar token hai toh auto load
+  window.onload = () => {
+    if (localStorage.getItem('token')) loadTests();
+  };
+</script>
