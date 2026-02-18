@@ -1,5 +1,5 @@
 const express = require('express');
-const fs = require('fs');
+const jwt = require('jsonwebtoken');
 const path = require('path');
 
 const app = express();
@@ -8,32 +8,51 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Sample tests list (Quizard jaisa)
-const tests = [
-  { id: 'practice-14', name: 'Practice Test-14', date: '25/01/2026', questions: 180 },
-  { id: 'aits-4', name: 'AIT:4', date: '18/01/2026', questions: 180 },
-  { id: 'practice-13', name: 'Practice Test-13', date: '28/12/2025', questions: 180 },
-  // Add more
-];
+// JWT Secret (Render config vars me set kar dena)
+const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_this';  // change kar dena
 
-// API to get test list
-app.get('/api/tests', (req, res) => {
+// Middleware to verify token (PW Quizard jaisa)
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token nahi diya! Bearer token daal.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;  // optional: user info store kar sakta hai
+    next();
+  } catch (err) {
+    res.status(403).json({ error: 'Invalid or expired token' });
+  }
+};
+
+// Protected API for tests list (token ke bina nahi milega)
+app.get('/api/tests', verifyToken, (req, res) => {
+  const tests = [
+    { id: 'practice-14', name: 'Practice Test-14', date: '25/01/2026', questions: 180 },
+    { id: 'aits-4', name: 'AIT:4', date: '18/01/2026', questions: 180 },
+    { id: 'practice-13', name: 'Practice Test-13', date: '28/12/2025', questions: 180 }
+  ];
   res.json(tests);
 });
 
-// API to get questions for a test (sample)
-app.get('/api/test/:id/questions', (req, res) => {
-  const testId = req.params.id;
-  // Real me DB se le, abhi sample
-  const sampleQuestions = [
-    {
-      question: "NEET 2026 me kitne questions hote hain?",
-      options: ["180", "200", "150", "120"],
-      answer: "180"
-    },
-    // Add 179 more
-  ];
-  res.json(sampleQuestions);
+// Simple login route to generate token (PW jaise)
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  // Dummy check (real me DB se verify kar)
+  if (username === 'dev' && password === 'password123') {
+    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '2h' });  // 2 hours expiry
+    res.json({ token });
+  } else {
+    res.status(401).json({ error: 'Wrong credentials' });
+  }
+});
+
+// Quiz page (optional protected bana sakta hai)
+app.get('/test.html', verifyToken, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'test.html'));
 });
 
 app.get('/', (req, res) => {
@@ -41,5 +60,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Resonance Quiz server chal raha hai port ${port} pe!`);
+  console.log(`Resonance Quiz chal raha hai port ${port} pe!`);
 });
