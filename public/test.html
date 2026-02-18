@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resonance Test</title>
+  <style> body { padding: 20px; } </style>
+</head>
+<body>
+  <h1>Test Loading...</h1>
+  <div id="quiz"></div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const testId = urlParams.get('test');
+
+    fetch(`/api/test/${testId}/questions`)
+      .then(res => res.json())
+      .then(questions => {
+        const quizDiv = document.getElementById('quiz');
+        questions.forEach((q, index) => {
+          const qDiv = document.createElement('div');
+          qDiv.innerHTML = `
+            <p><strong>Q${index+1}: ${q.question}</strong></p>
+            \( {q.options.map(opt => `<label><input type="radio" name="q \){index}"> ${opt}</label><br>`).join('')}
+          `;
+          quizDiv.appendChild(qDiv);
+        });
+        // Add submit button later
+      });
+  </script>
+</body>
+</html>
